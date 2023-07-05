@@ -1,0 +1,5 @@
+LIBRARY "Windows.riscos-basics.graphics"
+MODE "X1280 Y960 C16M F60"
+PROCdrawFrame(300,300,900,900,25)
+END
+

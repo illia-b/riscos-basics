@@ -1,0 +1,38 @@
+
+MODE "X1280 Y960 C16M F60"
+LET screenWidth%=(VDU 11 + 1) << VDU 4
+LET screenHeight%=(VDU 12 + 1) << VDU 5
+
+REM Pixel size
+LET gridPadding% = 1 << (VDU 4 + 3)
+LET pixelSize% = 1 << (VDU 4 + 5)
+LET pixelGap% = 1 << (VDU 4 + 2)
+
+REM Pixels grid
+LET gridWidth% = screenWidth% / (pixelSize% + pixelGap%)
+LET gridHeight% = screenHeight% / (pixelSize% + pixelGap%)
+DIM pixels%(gridWidth%, gridHeight%)
+PRINT "Grid size: "; gridWidth%; "x"; gridHeight%
+PRINT "Screen size: "; screenWidth%; "x"; screenHeight%
+
+
+FOR y% = 0 TO gridHeight% - 1
+    FOR x% = 0 TO gridWidth% - 1
+        REM PRINT "x: "; x%; " y: "; y%
+        GCOL pixels%(x%, y%)
+        REM VDU 31,gridPadding% + x% * (pixelSize% + pixelGap%), gridPadding% + y% * (pixelSize% + pixelGap%)
+        REM PRINT pixels%(x%, y%)
+        RECTANGLE FILL gridPadding% + x% * (pixelSize% + pixelGap%), gridPadding% + y% * (pixelSize% + pixelGap%), pixelSize%
+    NEXT x%
+NEXT y%
+
+LET curPixelX% = 0
+LET curPixelY% = 0
+
+REM Highligh pixel
+RECTANGLE gridPadding% + curPixelX% * (pixelSize% + pixelGap%) - pixelGap% / 2, gridPadding% + curPixelY% * (pixelSize% + pixelGap%) - pixelGap% / 2, pixelSize% + pixelGap%
+GCOL 2
+
+DEF PROC
+
+END

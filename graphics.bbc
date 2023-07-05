@@ -1,0 +1,7 @@
+REM>graphics - lib with usefull graphics routines
+DEF PROCdrawFrame(x1,y1,x2,y2,width)
+    RECTANGLE FILL x1,y1,x1+width,y2
+    RECTANGLE FILL x1,y1,x2,y1+width
+    RECTANGLE FILL x2-width,y1,x2,y2
+    RECTANGLE FILL x1,y2-width,x2,y2
+ENDPROC
