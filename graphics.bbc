@@ -1,7 +1,69 @@
-REM>graphics - lib with usefull graphics routines
-DEF PROCdrawFrame(x1,y1,x2,y2,width)
-    RECTANGLE FILL x1,y1,x1+width,y2
-    RECTANGLE FILL x1,y1,x2,y1+width
-    RECTANGLE FILL x2-width,y1,x2,y2
-    RECTANGLE FILL x1,y2-width,x2,y2
+REM>$.Windows.riscos-basics.graphics - lib with usefull graphics routines
+
+
+DEF PROCsetColors(c1%, c2%)
+    A%=c1%
+    B%=c2%
+ENDPROC
+
+DEF PROCsetColors(c1%, c2%, c3%)
+    A%=c1%
+    B%=c2%
+    C%=c3%
+ENDPR
+
+DEF PROCsetupViewport
+    H% = VDU(12) + 1
+    R% = 1 << VDU(4)
+ENDPROC
+
+DEF PROCdrawFrame(x%,y%,w%,h%,lw%)
+    MOVE x%*R%,(H%-y%)*R%
+    PLOT &61,w%*R%,lw%*R%
+    PLOT &61,lw%*R%,-(h%+lw%)*R%
+    PLOT &61,-(w%+lw%)*R%,-lw%*R%
+    PLOT &61,-lw%*R%,(h%+2*lw%)*R%
+ENDPROC
+
+DEF PROCdrawFrameAnimated(x%,y%,w%,h%,lw%,pr)
+    LET color1% = A%
+    LET color2% = B%
+    LET progress = (1-pr)*2
+    IF progress > 1 THEN
+        color1%=B%
+        color2%=A%
+        progress=progress-1
+    ENDIF
+    progress=1-progress
+
+    GCOL color1%
+    MOVE (x%-lw%)*R%,(H%-y%+lw%)*R%
+    PLOT &61,(w%+2*lw%)*progress*R%,-lw%*R%
+    GCOL color2%
+    PLOT &65,(x%+w%+lw%)*R%,(H%-y%+lw%)*R%
+    PLOT &61,-lw%*R%,-(h%+2*lw%)*progress*R%
+    GCOL color1%
+    PLOT &65,(x%+w%+lw%)*R%,(H%-y%-h%-lw%)*R%
+    PLOT &61,-(w%+2*lw%)*progress*R%,lw%*R%
+    GCOL color2%
+    PLOT &65,(x%-lw%)*R%,(H%-y%-h%-lw%)*R%
+    PLOT &61,lw%*R%,(h%+2*lw%)*progress*R%
+    GCOL color1%
+    PLOT &65,(x%-lw%)*R%,(H%-y%+lw%)*R%
+ENDPROC
+
+DEF PROCfillRect(x%,y%,w%,h%)
+    RECTANGLE FILL x%*R%,(H%-y%-h%)*R%,w%*R%,h%*R%
+ENDPROC
+
+DEF PROCfillCircle(x%,y%,r%)
+    CIRCLE FILL x%*R%,(H%-y%)*R%,r%*R%
+ENDPROC
+
+DEF PROClabel(x%,y%,text$)
+    VDU 5
+    MOVE (x%)*R%,(H%-y%)*R%
+    GCOL OF 0,0,0 ON 1,1,1
+    PRINT text$
+    VDU 4
 ENDPROC

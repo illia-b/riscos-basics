@@ -1,5 +1,254 @@
-LIBRARY "Windows.riscos-basics.graphics"
+REM>$.Windows.riscos-basics.testgraphics
+LIBRARY "$.Windows.riscos-basics.graphics"
+
 MODE "X1280 Y960 C16M F60"
-PROCdrawFrame(300,300,900,900,25)
+PROCsetupViewport
+
+REM / colors in form of indices of color stops, 3 for a color
+    DIM colorStops%(3)
+    colorStops%() = &FF, &00, &80
+    DIM colors%(26,2)
+    colors%() = 0,0,0,1,1,0,1,0,1,0,1,1,1,0,0,0,1,0,0,0,1,1,1,1,0,0,2,1,0,2,0,1,2,0,2,0,1,2,0,0,2,1,2,0,0,2,1,0,2,0,1,2,2,0,2,0,2,0,2,2,1,2,2,2,1,2,2,2,1,1,1,2,1,2,1,2,1,1,2,2,2
+REM /
+
+LET colorSelectMode%=TRUE
+LET drawMode%=FALSE
+LET selectedColor%=0
+LET cursorX%=0
+LET cursorY%=0
+LET nextColor%=0
+LET nextCursorX%=0
+LET nextCursorY%=0
+DIM pixels%(399)
+DIM selected%(399)
+selected%()=TRUE
+DIM next%(400)
+next%()=-1
+
+REM Buttons: up, down, left, right, space, tab
+LET _Up% = 0
+LET _Down% = 1
+LET _Left% = 2
+LET _Right% = 3
+LET _Space% = 4
+LET _Tab% = 5
+DIM buttonDown%(5)
+DIM nextButtonDown%(5)
+DIM buttonKey%(5)
+buttonKey%() = -58, -42, -26, -122, -99, -97
+DIM buttonDelay%(5)
+buttonDelay%() = 15, 15, 15, 15, 0, 100
+
+PROCdrawUi
+PROCdrawGrid
+
+LET elapsed%=TIME
+LET delta%=0
+WHILE TRUE
+    delta%=TIME-elapsed%
+    elapsed%=TIME
+    PROCreadInput
+    PROCprocessInput
+    PROCupdateUi(elapsed%)
+    WAIT
+ENDWHILE
 END
 
+DEF PROCdrawUi
+    GCOL &ff,&ff,&ff
+    PROCfillRect(0,0,1280,960)
+    GCOL 0,0,0
+    PROCfillRect(10,30,1260,810)
+    PROCdrawColors
+ENDPROC
+
+DEF PROCreadInput
+    FOR i% = 0 TO 5
+        buttonDown%(i%) = FALSE
+        LET down% = INKEY(buttonKey%(i%))
+        IF down% THEN
+            IF nextButtonDown%(i%) < elapsed% THEN
+                nextButtonDown%(i%) = elapsed% + buttonDelay%(i%)
+                buttonDown%(i%) = TRUE
+            ENDIF
+        ELSE
+            nextButtonDown%(i%)=elapsed%
+        ENDIF
+    NEXT i%
+ENDPROC
+
+DEF PROCprocessInput
+    IF buttonDown%(_Tab%) THEN
+        IF drawMode% THEN
+            PROCselectConnected
+        ENDIF
+        colorSelectMode%=NOT colorSelectMode%
+        drawMode%=NOT drawMode%
+    ENDIF
+
+    nextColor%=selectedColor%
+    nextCursorX%=cursorX%
+    nextCursorY%=cursorY%
+    IF colorSelectMode% THEN
+        IF buttonDown%(_Left%) THEN
+            nextColor%=nextColor%-1
+        ENDIF
+        IF buttonDown%(_Right%) THEN
+            nextColor%=nextColor%+1
+        ENDIF
+
+        IF nextColor% < 0 THEN
+            nextColor%=0
+        ENDIF
+        IF nextColor% > 26 THEN
+            nextColor%=26
+        ENDIF
+    ENDIF
+
+    IF drawMode% THEN
+        IF buttonDown%(_Left%) THEN
+            nextCursorX%=nextCursorX%-1
+        ENDIF
+        IF buttonDown%(_Right%) THEN
+            nextCursorX%=nextCursorX%+1
+        ENDIF
+        IF buttonDown%(_Up%) THEN
+            nextCursorY%=nextCursorY%-1
+        ENDIF
+        IF buttonDown%(_Down%) THEN
+            nextCursorY%=nextCursorY%+1
+        ENDIF
+        
+        IF nextCursorX% < 0 THEN
+            nextCursorX%=0
+        ENDIF
+        IF nextCursorX% > 24 THEN
+            nextCursorX%=24
+        ENDIF
+        IF nextCursorY% < 0 THEN
+            nextCursorY%=0
+        ENDIF
+        IF nextCursorY% > 15 THEN
+            nextCursorY%=15
+        ENDIF
+    ENDIF   
+ENDPROC
+
+DEF PROCselectConnected
+    next%()=-1
+    selected%()=FALSE
+    LET index%=FNidx
+    next%(0)=index%
+    selected%(index%)=TRUE
+    LOCAL col%
+    LOCAL head%
+    LOCAL tail%
+    LOCAL ix%
+    LOCAL iy%
+    head% = 0
+    tail% = 1
+    col%=pixels%(index%)
+    WHILE next%(head%) <> -1
+        LET index%=next%(head%)
+        ix%=index% MOD 25
+        iy%=index% DIV 25
+
+        IF ix% > 0 THEN
+            IF pixels%(index%-1)=col% AND NOT selected%(index%-1) THEN
+                selected%(index%-1)=TRUE
+                next%(tail%)=index%-1
+                tail%=tail%+1
+            ENDIF
+        ENDIF
+        IF ix% < 24 THEN
+            IF pixels%(index%+1)=col% AND NOT selected%(index%+1) THEN
+                selected%(index%+1)=TRUE
+                next%(tail%)=index%+1
+                tail%=tail%+1
+            ENDIF
+        ENDIF
+        IF iy% > 0 THEN
+            IF pixels%(index%-25)=col% AND NOT selected%(index%-25) THEN
+                selected%(index%-25)=TRUE
+                next%(tail%)=index%-25
+                tail%=tail%+1
+            ENDIF
+        ENDIF
+        IF iy% < 15 THEN
+            IF pixels%(index%+25)=col% AND NOT selected%(index%+25) THEN
+                selected%(index%+25)=TRUE
+                next%(tail%)=index%+25
+                tail%=tail%+1
+            ENDIF
+        ENDIF
+        head%=head%+1
+    ENDWHILE
+ENDPROC
+
+DEF PROCupdateUi(elapsed%)
+    LET animProgress100=elapsed% MOD 100 / 100
+    PROCsetColors(2,63)
+    IF colorSelectMode% THEN
+        GCOL &40,&40,&40
+        PROCdrawFrame(16+selectedColor%*46,856,41,88,3)
+        selectedColor%=nextColor%
+        PROCdrawFrameAnimated(16+selectedColor%*46,856,41,88,3,animProgress100)
+    ELSE 
+        GCOL 52
+        PROCdrawFrame(16+selectedColor%*46,856,41,88,3)
+    ENDIF
+    IF drawMode% THEN
+        GCOL 0,0,0
+        PROCdrawFrame(16+cursorX%*50,36+cursorY%*50,48,48,3)
+        cursorX%=nextCursorX%
+        cursorY%=nextCursorY%
+        PROCdrawFrameAnimated(16+cursorX%*50,36+cursorY%*50,48,48,3,animProgress100)
+    ELSE 
+        GCOL 52
+        PROCdrawFrame(16+cursorX%*50,36+cursorY%*50,48,48,3)
+    ENDIF
+
+    IF buttonDown%(_Space%) THEN
+        IF drawMode% THEN
+            LET index%=FNidx
+            pixels%(index%)=selectedColor%
+            GCOL colorStops%(colors%(selectedColor%,0)),colorStops%(colors%(selectedColor%,1)),colorStops%(colors%(selectedColor%,2))
+            PROCfillRect(20 + cursorX%*50, 40 + cursorY%*50, 40, 40)
+        ELSE
+            FOR c% = 0 TO 399
+                IF selected%(c%) THEN
+                    cx%=c% MOD 25
+                    cy%=c% DIV 25
+                    pixels%(c%)=selectedColor%
+                    GCOL colorStops%(colors%(pixels%(c%),0)),colorStops%(colors%(pixels%(c%),1)),colorStops%(colors%(pixels%(c%),2))
+                    PROCfillRect(20 + cx%*50, 40 + cy%*50, 40, 40)
+                ENDIF
+            NEXT c%
+        ENDIF
+
+    ENDIF
+ENDPROC
+
+DEF PROCdrawColors
+    GCOL &40,&40,&40
+    PROCfillRect(10,850,1260,100)
+    FOR i% = 0 TO 26
+        GCOL colorStops%(colors%(i%,0)),colorStops%(colors%(i%,1)),colorStops%(colors%(i%,2))
+        PROCfillRect(20+i%*46,860,33,80)
+    NEXT i%
+ENDPROC
+
+REM Grid area is 1260x830
+REM Grid 
+DEF PROCdrawGrid
+    FOR c% = 0 TO 399
+        cx%=c% MOD 25
+        cy%=c% DIV 25
+        GCOL colorStops%(colors%(pixels%(c%),0)),colorStops%(colors%(pixels%(c%),1)),colorStops%(colors%(pixels%(c%),2))
+        PROCfillRect(20 + cx%*50, 40 + cy%*50, 40, 40)
+        REM PROClabel(30+cx%*50, 55+cy%*50, STR$(c%))
+    NEXT c%
+ENDPROC
+
+DEF FNidx
+=cursorX%+cursorY%*25
