@@ -1,5 +1,5 @@
-REM>$.Windows.riscos-basics.testgraphics
-LIBRARY "$.Windows.riscos-basics.graphics"
+REM>$.Windows.color
+LIBRARY "$.Windows.lib.graphics"
 
 MODE "X1280 Y960 C16M F60"
 PROCsetupViewport

@@ -1,9 +1,0 @@
-REM>SYNTAX
-PRINT 1.9+10E3
-REM Comment
- PRINT "LINE NUMBER"
- PRINT "Right?"
- PRINT "Will this work?"
-PRINT "String" : REM String and comment
-PRINT "HELLO"
-END

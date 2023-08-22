@@ -1,4 +1,4 @@
-REM>$.Windows.riscos-basics.graphics - lib with usefull graphics routines
+REM>$.Windows.lib.graphics - lib with usefull graphics routines
 
 
 DEF PROCsetColors(c1%, c2%)
