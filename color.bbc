@@ -38,6 +38,10 @@ DIM buttonKey%(5)
 buttonKey%() = -58, -42, -26, -122, -99, -97
 DIM buttonDelay%(5)
 buttonDelay%() = 15, 15, 15, 15, 0, 100
+DIM buttonFirstDelay%(5)
+buttonFirstDelay%() = 50, 50, 50, 50, 0, 100
+DIM buttonNewDown%(5)
+buttonNewDown%() = TRUE
 
 PROCdrawUi
 PROCdrawGrid
@@ -68,11 +72,17 @@ DEF PROCreadInput
         LET down% = INKEY(buttonKey%(i%))
         IF down% THEN
             IF nextButtonDown%(i%) < elapsed% THEN
-                nextButtonDown%(i%) = elapsed% + buttonDelay%(i%)
+                IF buttonNewDown%(i%) THEN
+                    nextButtonDown%(i%) = elapsed% + buttonFirstDelay%(i%)
+                    buttonNewDown%(i%) = FALSE
+                ELSE
+                    nextButtonDown%(i%) = elapsed% + buttonDelay%(i%)
+                ENDIF
                 buttonDown%(i%) = TRUE
             ENDIF
         ELSE
             nextButtonDown%(i%)=elapsed%
+            buttonNewDown%(i%)=TRUE
         ENDIF
     NEXT i%
 ENDPROC
